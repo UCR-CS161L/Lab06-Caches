@@ -1,24 +1,25 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+//=========================================================================
+// Name & Email must be EXACTLY as in Gradescope roster!
+// Name: 
+// Email: 
 // 
-// Create Date: 12/18/2021 11:31:41 AM
-// Design Name: 
-// Module Name: encoder
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Assignment name: 
+// Lab section: 
+// TA: 
 // 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+// I hereby certify that I have not received assistance on this assignment,
+// or used code, from ANY outside source other than the instruction team
+// (apart from what was provided in the starter file).
+//
+//=========================================================================
 
+//=========================================================================
+//
+// DO NOT CHANGE ANYTHING BELOW THIS COMMENT. IT IS PROVIDED TO MAKE SURE 
+// YOUR LAB IS SUCCESSFULL. 
+//
+//=========================================================================
 
 module encoder #(
     parameter IN_SIZE = 4,

@@ -1,23 +1,25 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+//=========================================================================
+// Name & Email must be EXACTLY as in Gradescope roster!
+// Name: 
+// Email: 
 // 
-// Create Date: 12/07/2021 12:16:02 PM
-// Design Name: 
-// Module Name: cache_tb
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Assignment name: 
+// Lab section: 
+// TA: 
 // 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+// I hereby certify that I have not received assistance on this assignment,
+// or used code, from ANY outside source other than the instruction team
+// (apart from what was provided in the starter file).
+//
+//=========================================================================
+
+//=========================================================================
+//
+// DO NOT CHANGE ANYTHING BELOW THIS COMMENT. IT IS PROVIDED TO MAKE SURE 
+// YOUR LAB IS SUCCESSFULL. 
+//
+//=========================================================================
 
 `define bits(x) $rtoi($log10(x)/$log10(2))
 
@@ -90,6 +92,8 @@ initial begin
 end
 
 integer address;
+integer type;
+integer size;
 integer scan_file;
 
 integer miss_count = 0;
@@ -113,7 +117,7 @@ initial begin
             $display("Replacement:    %7s", REPLACEMENT);
             $finish;
         end
-        scan_file = $fscanf(address_file, "%x\n", address_in);
+        scan_file = $fscanf(address_file, "%c %x,$d\n", type, address_in, size);
         
         @(posedge clk);
         total_count = total_count + 1;

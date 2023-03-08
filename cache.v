@@ -1,24 +1,25 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+//=========================================================================
+// Name & Email must be EXACTLY as in Gradescope roster!
+// Name: 
+// Email: 
 // 
-// Create Date: 12/07/2021 12:08:29 PM
-// Design Name: 
-// Module Name: cache
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Assignment name: 
+// Lab section: 
+// TA: 
 // 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+// I hereby certify that I have not received assistance on this assignment,
+// or used code, from ANY outside source other than the instruction team
+// (apart from what was provided in the starter file).
+//
+//=========================================================================
 
+//=========================================================================
+//
+// DO NOT CHANGE ANYTHING BELOW THIS COMMENT. IT IS PROVIDED TO MAKE SURE 
+// YOUR LAB IS SUCCESSFULL. 
+//
+//=========================================================================
 
 module cache #(
     parameter ASSOCIATIVITY  =  8,
@@ -103,19 +104,6 @@ endgenerate
 
 encoder #(.IN_SIZE(ASSOCIATIVITY), .OUT_SIZE(WAY_BITS)) match_encoder (.out(match), .in(hits));
 
-//fifo_replacement # (
-//    .ASSOCIATIVITY(ASSOCIATIVITY), 
-//    .SET_SIZE(SET_BITS),
-//    .WAY_SIZE(WAY_BITS)
-//    ) replacement (
-//    .clk(clk),
-//    .rst(rst),
-//    .enable(enable),
-//    .set_in(set_idx),
-//    .way_in(match),
-//    .next_out(way)
-//);
-    
 integer w;
 
 always @(posedge clk) begin
