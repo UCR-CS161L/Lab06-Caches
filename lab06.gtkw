@@ -1,0 +1,34 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Feb 17 22:03:02 2021
+[*]
+[dumpfile] "/home/allan/cs161L/Lab05/test.vcd"
+[dumpfile_mtime] "Wed Feb 17 21:59:11 2021"
+[dumpfile_size] 1287
+[savefile] "/home/allan/cs161L/Lab05/lab05.gtkw"
+[timestart] 0
+[size] 1911 985
+[pos] 368 865
+*-14.408216 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] processor_tb.
+[sst_width] 233
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 278
+@28
+processor_tb.clk[0]
+processor_tb.rst[0]
+@22
+processor_tb.prog_count[31:0]
+processor_tb.uut.instruction[31:0]
+processor_tb.uut.instr_opcode[5:0]
+processor_tb.uut.reg1_addr[4:0]
+processor_tb.uut.reg1_data[31:0]
+processor_tb.uut.reg2_addr[4:0]
+processor_tb.uut.reg2_data[31:0]
+processor_tb.uut.write_reg_addr[4:0]
+processor_tb.uut.write_reg_data[31:0]
+@29
+processor_tb.uut.write_reg_select[0]
+[pattern_trace] 1
+[pattern_trace] 0
