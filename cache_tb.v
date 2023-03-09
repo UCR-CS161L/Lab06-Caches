@@ -33,7 +33,8 @@ module cache_tb #(
     parameter CACHE_SIZE    = 2048,
     parameter WAY_BITS      = `bits(ASSOCIATIVITY) + 1,
     parameter SET_BITS      = `calc_set_bits(CACHE_SIZE, ASSOCIATIVITY, BLOCK_BITS),
-    parameter TAG_BITS      = ADDRESS_BITS - BLOCK_BITS - SET_BITS
+    parameter TAG_BITS      = ADDRESS_BITS - BLOCK_BITS - SET_BITS,
+    parameter TRACE_FILE    = "./trace.mem"
 );
 
 reg clk;
@@ -64,7 +65,7 @@ cache #(
 );
 
 initial begin
-   $dumpfile("testbench.vcd");
+   $dumpfile("lab06.vcd");
    $dumpvars(0, UUT);
 end
 
@@ -83,7 +84,7 @@ integer address_file;
 
 initial begin
     $write("Opening file...");
-    address_file = $fopen("./trace.mem", "r");
+    address_file = $fopen(TRACE_FILE, "r");
     if ($feof(address_file)) begin
         $display("*** Cannot open trace file ***", address_file);
         $finish;
