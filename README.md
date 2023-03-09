@@ -163,7 +163,7 @@ module cache_tb #(
 If you do make the changes in `cache_tb.v` rather than change the parameters on the command line, then you should use the following command:
 
 ```sh
-iverilog -o cache_testbench cache.sv cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
+iverilog -o lab06_sim cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
 
 Notice that it is the same command as above, with the `-Pcache_tb.Xs` removed. Adding `-Pcach_tb.X=Y` overrides the values in the .v file
