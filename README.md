@@ -2,15 +2,119 @@
 
 ## Introduction
 
-In this lab, you will be exploring cache design trade-offs. You will build a number of different caches, and see how these design choices affect the number of memory accesses. An implementation of a cache simulation, written in Verilog, is included in this lab’s zip file. It has been tested in iverilog and works. It will also work in Vivado with one minor change to the test bench.
+In this lab, you will be exploring cache design trade-offs. You will test a number of different cache configurations, and see how these configurationss affect the number of miss rate. An implementation of a cache module, written in Verilog, is included in this lab. It has been tested in iverilog and works. Additionally, we'll briefly explore why there was a difference in 
+performance for the case study done in Lab04.
 
-**Note:** You can use a modified version of the [PTLSIM](https://drive.google.com/open?id=1mi9z5bPe8ol0j2o4DurU2-ZQXi6OgFrH) simulator to get an executable's memory trace. This executable should work on any compiled C/C++ application. To use it call ./ptlsim with your executable as an argument (i.e. "$./ptlsim a.out"). The simulator should output two files ptlsim.log, and ptlsim.cache. The .cache file will hold a trace of instruction and data loads for your executable. PTLSIM is used to generate traces of any compiled program you have installed. You can generate traces if you want to test your simulator on multiple programs, but we are only grading the performance on the trace below. (It is not required to use this tool, but it might be used to inform your decision for this lab.)
+**Note:** For this lab you will use the `valgrind` tool. This tool simulates a runtime environment for the X86 Intel processor to instrument and measure programs. In this lab we will be 
+specifically collecting memory traces of several programs. The `valgrind` tool is already installed in the Codespace for this lab. You may also install this tool on your personal system. 
+For Mac OS X, users, especially those running on the newer Arm processors, it is not possible to install `valgrind` currently. 
+
+To collect a memory trace using `valgrind` we'll use the following command:
+
+```sh
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello
+```
+
+This command uses the lackey tool of `valgrind` to do a memory trace for the executable `hello`. It then simulates running the executable and keeps track of all types of memory accesses
+including data loads, store and modifications, and instruction loads. For this lab, we will be interested in only the loads of data and instructions.
+
+The output of this program should look something like this:
+
+```
+==3930== Lackey, an example Valgrind tool
+==3930== Copyright (C) 2002-2017, and GNU GPL'd, by Nicholas Nethercote.
+==3930== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3930== Command: ./prog0.out 100
+==3930== 
+I  040202b0,3
+I  040202b3,5
+ S 1ffeffff78,8
+I  04021050,4
+I  04021054,1
+ S 1ffeffff70,8
+I  04021055,3
+I  04021058,2
+ S 1ffeffff68,8
+I  0402105a,2
+ S 1ffeffff60,8
+I  0402105c,2
+ S 1ffeffff58,8
+I  0402105e,2
+ S 1ffeffff50,8
+I  04021060,1
+ S 1ffeffff48,8
+I  04021061,7
+I  04021068,4
+ S 1ffefffef8,8
+I  0402106c,2
+I  0402106e,7
+I  04021075,7
+ M 0403ae0e,1
+I  0402107c,7
+ S 0403aaf0,8
+I  04021083,4
+I  04021087,3
+I  0402108a,7
+I  04021091,7
+ S 04039aa0,8
+I  04021098,7
+ L 04039e80,8
+I  0402109f,7
+ S 0403ab00,8
+```
+
+The first 5 lines are the header to the output, and will be ignored. The succeeding lines are the memory accesses. Lines starting with an `L` are data loads, starting with an `S` are
+data stores, starting with `I` are instruction loads and starting with `M` data modifications. We will be looking at the lines starting with `L` and `I`. After the memory access type
+are the address and size of the memory accessed. We are only interested in the accessed address, however. 
+
+The following descption, using `awk`, describes how to collect a memory trace and thenb filter the output of `valgrind` to a format usable by the cache module given as part of this lab.
+
+First you will collect the memory trace and store it in a text file using the following command:
+
+```sh
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
+```
+
+To filter the output from `valgrind` into a format usable by the cache module, use the following command:
+
+```sh
+awk '{if($1 == "L" || $1 == "I") {split($2, a, ","); print a[1];}}' hello.raw.mem > hello.mem
+```
+
+The output of this command will look like that:
+
+```
+040202b0
+040202b3
+04021050
+04021054
+04021055
+04021058
+0402105a
+0402105c
+0402105e
+04021060
+04021061
+04021068
+0402106c
+0402106e
+04021075
+0402107c
+04021083
+04021087
+0402108a
+04021091
+```
+
+This output is the format we will use for the data collection throughout this lab. 
 
 ## Deliverables
 
-You will turn in a lab report that chooses a configuration for a cache that you feel performs the best based on your testing. There is no right or wrong answer, but you must choose a configuration and provide data that supports why you believe such a configuration is best.
+You will turn in a lab report that compares the caching miss rate for two hello world programs, one written in C the other in C++, and then output of running the case study programs from Lab04. Next, your report will identify the best cache configuration for each program based on the miss rate. Your answer does not necessarily have to be the configuration with the best performance, but you might want to way the diminishing returns on adding more transistors to get less and less performance benefit. There is no right or wrong answer, but you must choose a configuration and provide and explanation as to why you believe such a configuration is best.
 
-The cache simulator provided reads one address trace file and simulates multiple cache architectures and reports the miss rate (# misses / total accesses). This simulator has been tested with all the following attributes:
+### Using the Cache Simulator
+
+The cache simulator provided reads addresses from a memory trace file and simulates multiple cache architectures and reports the miss rate (# misses / total accesses). This simulator has been tested with all the following attributes:
 * 32-bit addresses
 * **Block Size:** 16 elements
 * **Replacement Policies:** LRU, FIFO
@@ -21,18 +125,16 @@ The input to your simulator will be the following, given as arguments on the com
 * Associativity as 1, 2, 4, or 8
 * Cache size as 1024, 2048, 4096, 8192 or 16384
 * Replacement policy as LRU or FIFO 
-* An input file produced by PTLSIM with a trace of memory locations that is redirected to your executable.
+* An input file produced by `valgrind` and filtered with `awk` with a memory trace from the executables described above.
 
 You can change any of these parameters either directly in cach_tb.v or on the command line when you synthesize the testbench.
-For example, this command line would create a 2-way set associative, 16KB cache that uses a FIFO replacement policy:
+For example, this command line would create a 2-way set associative, 16KB (notice the cache size in the command below is 8K not 16K, why?) cache that uses a LRU replacement policy:
 
 ```sh
-iverilog -o cache_testbench -Pcache_tb.ASSOCIATIVITY=2
--Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\”LRU\” cache.sv
-cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
+iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\”LRU\” cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
 
-This command line would then produce a simulation that would output the miss rate, as specified below, for a 2-way cache of size 8192 blocks using the LRU replacement policy for the addresses in the file named trace.mem that is part of this lab.
+This command line would then produce a simulation which when run would output the miss rate, as specified below, for a 2-way cache of size 8192 blocks using the LRU replacement policy for the addresses in the file named trace.mem that is part of this lab.
 
 You can also change the configuration in the cache_tb.v file as well. The following code produces the same configuration as the iverilog command above:
 
@@ -48,154 +150,97 @@ module cache_tb #(
     parameter TAG_BITS      = ADDRESS_BITS - BLOCK_BITS - SET_BITS
 );
 ```
-You only need to modify the parameters ASSOCIATIVITY, CACHE_SIZE and REPLACEMENT. Leave all other parameters the same.
 
-The following command line would create a simulation that you would use for collecting data:
+If you do make the changes in `cache_tb.v` rather than change the parameters on the command line, then you should use the following command:
 
 ```sh
-iverilog -o cache_testbench cache.sv cache_tb.v set.v encoder.v
-lru_replacement.v fifo_replacement.v
+iverilog -o cache_testbench cache.sv cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
 
 Notice that it is the same command as above, with the `-Pcache_tb.Xs` removed. Adding `-Pcach_tb.X=Y` overrides the values in the .v file
 
+You only need to modify the parameters ASSOCIATIVITY, CACHE_SIZE and REPLACEMENT. Leave all other parameters the same.
 To see the output for any configuration type the command: vvp cache_testbench.
 
 The output from the simulator has the following format.
 * First output is the associativity, 1, 2, 4, or 8, on it’s own line
 * Next output is the cache size, 1024, 2048, 4096, 8192 or 16384, on it’s own line
 * Next output is the replacement policy, LRU or FIFO, on it’s own line
-* Finally, the output is the miss rate as a percentage for example 5.72.
+* Finally, the output is the miss rate as a percentage, for example 5.72.
 
 To test your configuration you should use the memory trace file, trace.mem, included in this lab’s zipfile. The output for this file should look like for the above vvp command line:
 
 ```sh
-Associativity:      8 
-Cache size:         16384 
-Replacement policy: LRU 
-Miss rate:          5.72
+misses:          216179
+total accesses:  849921
+Miss rate:        25.44
+Way bits:             4
+Set bits:             4
+Tag bits:            24
+Associativity:        8
+Cache Size:        2048
+Replacement:        LRU
+```
+### Programs for Memory Traces
+
+We are going to use 4 programs for the analysis we are doing in this lab. The first two are simple hello world programs. It is suprising how long the memory traces are for these simple 
+programs.
+
+For the C version of the hello world program, use the following code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    printf("Hello, World!\n");
+    return EXIT_SUCCESS;
+}
 ```
 
-You may use any data you want (as produced by the PTLSIM tool mentioned above, but to test if you're simulating the caches correctly the following values will be used as part of the autograder. The best practice would be to test your code for all the possible inputs against the given memory trace and make sure it matches exactly the values below.
+```c++
+#include <iostream>
+#include <cstdlib>
 
-<table style="border-collapse: collapse; width: 400px; height: 174px;" border="1">
-    <tbody>
-        <tr style="height: 29px;">
-            <td style="width: 100%; height: 29px; text-align: center;" colspan="6">LRU Replacement Policy</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>1024</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>2048</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>4096</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>8192</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>16834</strong></td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>1</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">55.01</td>
-            <td style="width: 18%; height: 29px; text-align: right;">42.07</td>
-            <td style="width: 18%; height: 29px; text-align: right;">29.30</td>
-            <td style="width: 18%; height: 29px; text-align: right;">20.74</td>
-            <td style="width: 18%; height: 29px; text-align: right;">13.91</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>2</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">51.58</td>
-            <td style="width: 18%; height: 29px; text-align: right;">36.44</td>
-            <td style="width: 18%; height: 29px; text-align: right;">23.70</td>
-            <td style="width: 18%; height: 29px; text-align: right;">13.98</td>
-            <td style="width: 18%; height: 29px; text-align: right;">8.49</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>4</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">48.85</td>
-            <td style="width: 18%; height: 29px; text-align: right;">33.97</td>
-            <td style="width: 18%; height: 29px; text-align: right;">20.04</td>
-            <td style="width: 18%; height: 29px; text-align: right;">11.33</td>
-            <td style="width: 18%; height: 29px; text-align: right;">6.37</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>8</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">47.44</td>
-            <td style="width: 18%; height: 29px; text-align: right;">32.20</td>
-            <td style="width: 18%; height: 29px; text-align: right;">18.63</td>
-            <td style="width: 18%; height: 29px; text-align: right;">10.02</td>
-            <td style="width: 18%; height: 29px; text-align: right;">5.72</td>
-        </tr>
-    </tbody>
-</table>
+int main(int argc, char *argv[]) {
+    std::cout << "Hello, World!" << std::endl;
+    return EXIT_SUCCESS;
+}
+```
 
-**Note:** The verilog code provided for some unknown reason produces the miss rate 50.29 instead of 47.44 for 8-way associativity and a cache size of 1024. Use 47.44 for any graphing you do in the lab report. All other values for this replacement policy are correct.
-
-
-<table style="border-collapse: collapse; width: 400px; height: 174px;" border="1">
-    <tbody>
-        <tr style="height: 29px;">
-            <td style="width: 100%; height: 29px; text-align: center;" colspan="6">FIFO Replacement Policy</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>1024</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>2048</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>4096</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>8192</strong></td>
-            <td style="width: 18%; text-align: center; height: 29px;"><strong>16834</strong></td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>1</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">55.01</td>
-            <td style="width: 18%; height: 29px; text-align: right;">42.07</td>
-            <td style="width: 18%; height: 29px; text-align: right;">29.30</td>
-            <td style="width: 18%; height: 29px; text-align: right;">20.74</td>
-            <td style="width: 18%; height: 29px; text-align: right;">13.91</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>2</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">53.31</td>
-            <td style="width: 18%; height: 29px; text-align: right;">38.32</td>
-            <td style="width: 18%; height: 29px; text-align: right;">25.47</td>
-            <td style="width: 18%; height: 29px; text-align: right;">15.37</td>
-            <td style="width: 18%; height: 29px; text-align: right;">9.49</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>4</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">51.86</td>
-            <td style="width: 18%; height: 29px; text-align: right;">37.07</td>
-            <td style="width: 18%; height: 29px; text-align: right;">23.11</td>
-            <td style="width: 18%; height: 29px; text-align: right;">13.67</td>
-            <td style="width: 18%; height: 29px; text-align: right;">7.86</td>
-        </tr>
-        <tr style="height: 29px;">
-            <td style="width: 10%; text-align: center; height: 29px;"><strong>8</strong></td>
-            <td style="width: 18%; height: 29px; text-align: right;">51.14</td>
-            <td style="width: 18%; height: 29px; text-align: right;">35.98</td>
-            <td style="width: 18%; height: 29px; text-align: right;">22.40</td>
-            <td style="width: 18%; height: 29px; text-align: right;">12.79</td>
-            <td style="width: 18%; height: 29px; text-align: right;">7.44</td>
-        </tr>
-    </tbody>
-</table>
+The other two programs are the same as from Lab04. The file `case_study.tar.gz` contains the code, and is included with these lab. Unzip this file and make the executables `prog0.out` and
+`prog1.out`. For this lab, we'll only run these executables with a size of 100. Creating traces for sizes greater than 100 will take too long on the containers used by Codespaces.
 
 ### Analysis
 
-As part of this lab you should run experiments with the configurations above, at the very least. You should also do some other analysis to choose your best configuration. For example, you can do larger cache sizes, 32K, 64K, etc. You could also create a new replacement policy. For example, you could create a new policy called random_replacement.v that picks a random number to choose a set to replace instead of using LRU (you can copy lru_replacement.v and change a couple of lines to achieve this). Another idea would be to analyze how long each configuration takes to converge to the final miss rate. If you modify the cache_tb.v file you can have it print data pairs with the current time and current miss rate and graph the miss rate over time. Any clever ideas you can come up with to analyze these confirmations is fair game.
+First, produce the memory traces for each of the executables described above. For example, for the C version of hello world, use the following command:
 
-In the end, your lab report must contain at least the graphing of the data above for each of the configurations you test, plus the graphs for the data you produce when you go beyond the configurations listed above.
+```sh
+valgrind --tool=lackey --mem-trace=yes --basic-counts=no ./hello 2> hello.raw.mem
+```
 
-From this data you should be able to form an opinion as to the best configuration and the make a coherent argument based on this data as to why it’s the best configuration. 
+Don't forget to process `hello.raw.mem` using `awk` as described above.
 
-You don't need to add a marker this time. Also, I've provided a .gtkw.
+Next, produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `prog0.out` from the case study:
+
+```sh
+valgrind --tool=lackey --mem-trace=yes --basic-counts=no ./prog0.out 100 2> prog0.raw.mem
+```
+Finally, run experiments, with all the configurations above, for each of the filtered memory trace files. You should also do some other analysis to choose your best configuration for each
+executable. Your report will specify and describe why you chose each configuration. 
+
+You don't need to any wave forms for this lab.
 
 ### Producing the Data Graphs
 
+You should provide at least one graph of the data from all the configurations tested for one of the executables described above. You can provide charts for more than one executable, but you 
+must do at least one. You only need to produce this graph for one replacement policy. This graph can be produced in any software you are familiar with, for example Excel or a Jupyter notebook. This graph should have separate lines for each associativity tested. The X-axis should be the size of the cache, and the Y-axis should be the miss rate.
 
 ### The Lab Report
 
 Finally, create a file called REPORT.md and use GitHub markdown to write your lab report. This lab
-report will again be short, and comprised of two sections. The first section is a description of 
-each test case. Use this section to discuss what changes you made in your tests from the prelab
-until this final report. The second section should include your waveform. 
+report will contain the information described above. Your charts can just be .png or .jpg files added to the repository. While your grade will be entirely based on this report, don't feel like
+you need to overload the grader with information by writing a lot of text. Instead specify which configurations you chose for each executable and why.  Additionally, describe your observations across the 4 executables and if there is a common theme among the configurations you choose. Be sure to include at least one chart in this lab report.
 
 ## Submission:
 
