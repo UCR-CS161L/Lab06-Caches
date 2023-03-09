@@ -118,7 +118,7 @@ initial begin
             $display("Replacement:    %7s", REPLACEMENT);
             $finish;
         end
-        scan_file = $fscanf(address_file, "%c %x,$d\n", type, address_in, size);
+        scan_file = $fscanf(address_file, "%x\n", address_in);
         
         @(posedge clk);
         total_count = total_count + 1;
