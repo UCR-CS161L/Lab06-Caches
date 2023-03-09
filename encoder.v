@@ -29,8 +29,8 @@ module encoder #(
     input wire [IN_SIZE-1:0] in
 );
     
-    always @(in) begin 
-        out = $rtoi($log10(in)/$log10(2));
+    always @(in)
+        for (out = 0; out < IN_SIZE && in[out] !== 1; out = out + 1) begin
     end
     
 endmodule
