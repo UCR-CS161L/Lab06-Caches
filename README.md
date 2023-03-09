@@ -227,7 +227,7 @@ The other two programs are the same as from Lab04. The file `case_study.tar.gz` 
 First, produce the memory traces for each of the executables described above. For example, for the C version of hello world, use the following command:
 
 ```sh
-valgrind --tool=lackey --mem-trace=yes --basic-counts=no ./hello 2> hello.raw.mem
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
 ```
 
 Don't forget to process `hello.raw.mem` using `awk` as described above.
@@ -235,7 +235,7 @@ Don't forget to process `hello.raw.mem` using `awk` as described above.
 Next, produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `prog0.out` from the case study:
 
 ```sh
-valgrind --tool=lackey --mem-trace=yes --basic-counts=no ./prog0.out 100 2> prog0.raw.mem
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./prog0.out 100 2> prog0.raw.mem
 ```
 Finally, run experiments, with all the configurations above, for each of the filtered memory trace files. You should also do some other analysis to choose your best configuration for each
 executable. Your report will specify and describe why you chose each configuration. 
