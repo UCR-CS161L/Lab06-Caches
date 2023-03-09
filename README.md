@@ -198,6 +198,8 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+For the C++ version of the hello world program, use the following code:
+
 ```c++
 #include <iostream>
 #include <cstdlib>
