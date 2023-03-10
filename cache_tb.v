@@ -101,7 +101,7 @@ integer miss_count = 0;
 integer total_count = 0;
 
 initial begin 
-        enable = 0;
+    enable <= 0;
     @(negedge rst);
     
     forever begin   
@@ -121,11 +121,11 @@ initial begin
         scan_file = $fscanf(address_file, "%x\n", address_in);
         
         @(posedge clk);
-        total_count = total_count + 1;
+        total_count <= total_count + 1;
         if (hit === 0) begin
-            miss_count = miss_count + 1;
-            data_in = $urandom;
-            enable = 1;
+            miss_count <= miss_count + 1;
+            data_in <= $urandom;
+            enable <= 1;
         end
         @(posedge clk);
         enable = 0;
