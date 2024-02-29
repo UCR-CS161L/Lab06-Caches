@@ -132,13 +132,13 @@ You can change any of these parameters either directly in cach_tb.v or on the co
 For example, this command line would create a 2-way set associative, 16KB (notice the cache size in the command below is 8K not 16K, why?) cache that uses a LRU replacement policy:
 
 ```sh
-iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\”LRU\” cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
+iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\"LRU\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
 
 You can also change the memory trace file on the command line when synthesizing the lab project with the following command:
 
 ```sh
-iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\”LRU\” -Pcache_tb.TRACE_FILE=\"hello.mem\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
+iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\"LRU\" -Pcache_tb.TRACE_FILE=\"hello.mem\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
 
 The only change from the previous command is the addition of the argument `-Pcache_tb.TRACE_FILE=\"hello.mem\"`.
