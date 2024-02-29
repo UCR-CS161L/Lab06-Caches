@@ -219,8 +219,43 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-The other two programs are the same as from Lab04. The file `case_study.tar.gz` contains the code, and is included with these lab. Unzip this file and make the executables `prog0.out` and
-`prog1.out`. For this lab, we'll only run these executables with a size of 100. Creating traces for sizes greater than 100 will take too long on the containers used by Codespaces.
+The other two programs that show how important understanding a computer's 
+architecture is, and the compiler is when developing efficient code. For this 
+study, you are to compare and analyze the execution time of the two programs 
+given in this repository in the files [program0.cpp](./program0.cpp) and 
+[program1.cpp](./program1.cpp). You should run a number of experiments varying 
+the input size from 100 to 30,000. 
+
+For this lab, we'll only run these executables with a size of 100. Creating traces for sizes greater than 100 will take too long on the containers used by Codespaces.
+
+### Building the Executables
+
+Before running the experiments, it is necessary that you build the code associated with this lab in [program0.cpp](./program0.cpp) and [program1.cpp](./program1.cpp). These executables are built using CMake. CMake is available on Windows, Mac OS X and Linux, and is the default project file for Visual Studio Code. Therefore, be begin building the executables, open the folder containing these files in Visual Studio Code. Then from the Command Pallete type CMake and then select "CMake: Configure". This step creates the build files for this project. You may be asked to select a kit. This means to select a C++ compiler installed on your system. Once you have configured the CMake project, you can build the executables. These executables will be called matrix-mul-row and matrix-mul-col. 
+
+If you don't have Visual Studio Code and the toolchain for C++, then you can do this project in a Codespace on GitHub, just as you've done in previous labs. As usual, create a repository by copying this template repository to a repository you own. Then go to Code -> Create Code Space. From there, follow the directions above to build the executables.
+
+If for some reason you cannot do the CMake configuration and/or build in Visual Studio Code, then you can execute the following commands to configure and build the executables.
+
+```sh
+mkdir build
+cmake -B ./build . # Configures the build system
+cmake --build build # Build the executables
+```
+
+### Running the Executables
+
+Once the executables are built, they can be run to observe how long matrix multiplications take when accessing the matrix either in row major or column major mode. If successful (it should always be successful), it will print out passed and the number of seconds take to do the matrix multiplication. 
+
+The following is an example of running a single experiment for row major matrix multiplication:
+
+```sh
+./build/matrix-mul-row-major 100 # run matrix multiplication with 100 X 100 matrix
+```
+
+The folling is an example of running a single experiment for column major matrix multiplication:
+
+```sh
+./build/matrix-mul-col-major 100 # run matrix multiplication with 100 X 100 matrix
 
 ### Analysis
 
@@ -232,11 +267,12 @@ valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.me
 
 Don't forget to process `hello.raw.mem` using `awk` as described above.
 
-Next, produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `prog0.out` from the case study:
+Next, produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `matrix-mul-col-major` from the case study:
 
 ```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./prog0.out 100 2> prog0.raw.mem
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./matrix-mul-col-major 100 2> matrix-mul-col-major.raw.mem
 ```
+
 Finally, run experiments, with all the configurations above, for each of the filtered memory trace files. You should also do some other analysis to choose your best configuration for each
 executable. Your report will specify and describe why you chose each configuration. 
 
