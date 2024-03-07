@@ -86,13 +86,13 @@ The folling is an example of running a single experiment for column major matrix
 First, produce the memory traces for each of the executables described above. For example, for the C version of hello world, use the following command:
 
 ```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./build/hello_c 2> hello_c.raw.mem
 ```
 
 Next, to produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `matrix-mul-col-major`:
 
 ```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./matrix-mul-col-major 100 2> matrix-mul-col-major.raw.mem
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./build/matrix-mul-col-major 100 2> matrix-mul-col-major.raw.mem
 ```
 
 These commands use the lackey tool of `valgrind` to do a memory trace for the executables. It then simulates running the executable and keeps track of all types of memory accesses
