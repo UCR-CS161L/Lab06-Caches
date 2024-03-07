@@ -2,20 +2,100 @@
 
 ## Introduction
 
-In this lab, you will be exploring cache design trade-offs. You will test a number of different cache configurations, and see how these configurationss affect the number of miss rate. An implementation of a cache module, written in Verilog, is included in this lab. It has been tested in iverilog and works. Additionally, we'll briefly explore why there was a difference in 
-performance for the case study done in Lab04.
+In this lab, you will be exploring how to design a cost effective cache. You will test a number of different cache configurations, and see how these configurationss affect the miss rate. An implementation of a cache module, written in Verilog, is included in this lab. It has been tested in iverilog and works. Additionally, we will explore data and instruction caches.
+
+To test these different cache configurations you will need to run some programs and capture the addresses that the program referenced while running the program. To capture these addresses
+we will use Valgrind to instrument 4 different programs: two matrix multiplication programs, one row major and the other column major, and two "Hello, World!" programs, one in C and the other
+in C++.
+
 
 **Note:** For this lab you will use the `valgrind` tool. This tool simulates a runtime environment for the X86 Intel processor to instrument and measure programs. In this lab we will be 
 specifically collecting memory traces of several programs. The `valgrind` tool is already installed in the Codespace for this lab. You may also install this tool on your personal system. 
 For Mac OS X, users, especially those running on the newer Arm processors, it is not possible to install `valgrind` currently. 
 
-To collect a memory trace using `valgrind` we'll use the following command:
+### Programs for Memory Traces
 
-```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello
+We are going to use 4 programs for the analysis we are doing in this lab. The first two are simple hello world programs. It is suprising how long the memory traces are for these simple 
+programs.
+
+For the C version of the hello world program, use the following code:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    printf("Hello, World!\n");
+    return EXIT_SUCCESS;
+}
 ```
 
-This command uses the lackey tool of `valgrind` to do a memory trace for the executable `hello`. It then simulates running the executable and keeps track of all types of memory accesses
+For the C++ version of the hello world program, use the following code:
+
+```c++
+#include <iostream>
+#include <cstdlib>
+
+int main(int argc, char *argv[]) {
+    std::cout << "Hello, World!" << std::endl;
+    return EXIT_SUCCESS;
+}
+```
+
+The other two programs that show how important understanding a computer's 
+architecture is, and the compiler is when developing efficient code. For this 
+study, you are to compare and analyze the execution time of the two programs 
+given in this repository in the files [program0.cpp](./program0.cpp) and 
+[program1.cpp](./program1.cpp). You should run a number of experiments varying 
+the input size from 100 to 30,000. 
+
+For this lab, we'll only run these executables with a size of 100. Creating traces for sizes greater than 100 will take too long on the containers used by Codespaces.
+
+### Building the Executables
+
+Before running the experiments, it is necessary that you build the code associated with this lab. These executables are built using CMake. CMake is available on Windows, Mac OS X and Linux, and is the default project file for Visual Studio Code. Therefore, be begin building the executables, open the folder containing these files in Visual Studio Code. Then from the Command Pallete type CMake and then select "CMake: Configure". This step creates the build files for this project. You may be asked to select a kit. This means to select a C++ compiler installed on your system. Once you have configured the CMake project, you can build the executables. These executables will be called matrix-mul-row and matrix-mul-col. 
+
+If you don't have Visual Studio Code and the toolchain for C++, then you can do this project in a Codespace on GitHub, just as you've done in previous labs. As usual, create a repository by copying this template repository to a repository you own. Then go to Code -> Create Code Space. From there, follow the directions above to build the executables.
+
+If for some reason you cannot do the CMake configuration and/or build in Visual Studio Code, then you can execute the following commands to configure and build the executables.
+
+```sh
+mkdir build
+cmake -B ./build . # Configures the build system
+cmake --build build # Build the executables
+```
+
+### Running the Executables
+
+Once the executables are built, they can be run to observe how long matrix multiplications take when accessing the matrix either in row major or column major mode. If successful (it should always be successful), it will print out passed and the number of seconds take to do the matrix multiplication. 
+
+The following is an example of running a single experiment for row major matrix multiplication:
+
+```sh
+./build/matrix-mul-row-major 100 # run matrix multiplication with 100 X 100 matrix
+```
+
+The folling is an example of running a single experiment for column major matrix multiplication:
+
+```sh
+./build/matrix-mul-col-major 100 # run matrix multiplication with 100 X 100 matrix
+```
+
+### Capturing Memory Addresses
+
+First, produce the memory traces for each of the executables described above. For example, for the C version of hello world, use the following command:
+
+```sh
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
+```
+
+Next, to produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `matrix-mul-col-major`:
+
+```sh
+valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./matrix-mul-col-major 100 2> matrix-mul-col-major.raw.mem
+```
+
+These commands use the lackey tool of `valgrind` to do a memory trace for the executables. It then simulates running the executable and keeps track of all types of memory accesses
 including data loads, store and modifications, and instruction loads. For this lab, we will be interested in only the loads of data and instructions.
 
 The output of this program should look something like this:
@@ -67,15 +147,7 @@ The first 5 lines are the header to the output, and will be ignored. The succeed
 data stores, starting with `I` are instruction loads and starting with `M` data modifications. We will be looking at the lines starting with `L` and `I`. After the memory access type
 are the address and size of the memory accessed. We are only interested in the accessed address, however. 
 
-The following descption, using `awk`, describes how to collect a memory trace and thenb filter the output of `valgrind` to a format usable by the cache module given as part of this lab.
-
-First you will collect the memory trace and store it in a text file using the following command:
-
-```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
-```
-
-To filter the output from `valgrind` into a format usable by the cache module, use the following command:
+The following command, using `awk`, shows how to filter the output of `valgrind` to a format usable by the cache module given as part of this lab.
 
 ```sh
 awk '{if($1 == "L" || $1 == "I") {split($2, a, ","); print a[1];}}' hello.raw.mem > hello.mem
@@ -106,46 +178,50 @@ The output of this command will look like that:
 04021091
 ```
 
-This output is the format we will use for the data collection throughout this lab. 
+This output is the format we will use for the data collection throughout this lab.
 
-## Deliverables
+### Testing Full, Data and Instruction Caches
 
-You will turn in a lab report that compares the caching miss rate for two hello world programs, one written in C the other in C++, and then output of running the case study programs from Lab04. Next, your report will identify the best cache configuration for each program based on the miss rate. Your answer does not necessarily have to be the configuration with the best performance, but you might want to way the diminishing returns on adding more transistors to get less and less performance benefit. There is no right or wrong answer, but you must choose a configuration and provide and explanation as to why you believe such a configuration is best.
+In this lab we will compare the performance of Full caches (caching both data and instrucitons), data caches and instruction caches. Modern processors have data and instruciton caches and we want to explore here how we can use these two separate caches to pontentially be cheaper than full caches with similar performance.
+
+In order to test these three types of caches, we'll need to filter the memory traces differently. For the Full cache we'll use all the appresses from the trace with the I and L prefixes. This filtering will mix both data and instruciton addresses. To test the Data and Instruction caches separately, we'll filter only the L and I addresses respectively.
+
+To create the full cache address capture you run the `awk` command from above:
+
+```sh
+awk '{if($1 == "L" || $1 == "I") {split($2, a, ","); print a[1];}}' hello.raw.mem > hello.LI.mem
+```
+
+The LI extention to the memory trace will mark this file as that for testing Full cache performance.
+
+To create the data cache address capture, run the following `awk` command:
+
+```sh
+awk '{if($1 == "L") {split($2, a, ","); print a[1];}}' hello.raw.mem > hello.L.mem
+```
+
+To create the instruction cache address capture, run the following `awk` command:
+
+```sh
+awk '{if($1 == "I") {split($2, a, ","); print a[1];}}' hello.raw.mem > hello.I.mem
+```
 
 ### Using the Cache Simulator
 
-The cache simulator provided reads addresses from a memory trace file and simulates multiple cache architectures and reports the miss rate (# misses / total accesses). This simulator has been tested with all the following attributes:
+The cache simulator provided reads addresses from a memory trace file and simulates multiple cache configurations and reports the miss rate (# misses / total accesses). This simulator has been tested with all the following attributes:
 * 32-bit addresses
 * **Block Size:** 16 elements
 * **Replacement Policies:** LRU, FIFO
 * **Cache Sizes:** 1024, 2048, 4096, 8192, 16384 locations
 * **Associativity:** Direct Mapped, 2-way, 4-way, and 8-way
 
-The input to your simulator will be the following, given as arguments on the command line:
+The input to synthesize the simulator will be the following, given as arguments on the command line:
 * Associativity as 1, 2, 4, or 8
 * Cache size as 1024, 2048, 4096, 8192 or 16384
 * Replacement policy as LRU or FIFO 
 * An input file produced by `valgrind` and filtered with `awk` with a memory trace from the executables described above.
 
-You can change any of these parameters either directly in cach_tb.v or on the command line when you synthesize the testbench.
-
-For example, this command line would create a 2-way set associative, 16KB (notice the cache size in the command below is 8K not 16K, why?) cache that uses a LRU replacement policy:
-
-```sh
-iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\"LRU\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
-```
-
-You can also change the memory trace file on the command line when synthesizing the lab project with the following command:
-
-```sh
-iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\"LRU\" -Pcache_tb.TRACE_FILE=\"hello.mem\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
-```
-
-The only change from the previous command is the addition of the argument `-Pcache_tb.TRACE_FILE=\"hello.mem\"`.
-
-This command line would then produce a simulation which when run would output the miss rate, as specified below, for a 2-way cache of size 8192 blocks using the LRU replacement policy for the addresses in the file named trace.mem that is part of this lab.
-
-You can also change the configuration in the cache_tb.v file as well. The following code produces the same configuration as the iverilog command above:
+You can change the configuration in the cache_tb.v file as well. The following code produces the same configuration as the iverilog command above:
 
 ```verilog
 module cache_tb #(
@@ -159,12 +235,19 @@ module cache_tb #(
     parameter TAG_BITS      = ADDRESS_BITS - BLOCK_BITS - SET_BITS
 );
 ```
-
 If you do make the changes in `cache_tb.v` rather than change the parameters on the command line, then you should use the following command:
 
 ```sh
 iverilog -o lab06_sim cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
 ```
+
+However, you can also easily configure the simulator using the command line to synthesize a test bench that prints out performance data. For example, this command line would create a 2-way set associative, 16KB (notice the cache size in the command below is 8K not 16K, why?) cache that uses a LRU replacement policy:
+
+```sh
+iverilog -o lab06_sim -Pcache_tb.ASSOCIATIVITY=2 -Pcache_tb.CACHE_SIZE=8192 -Pcache_tb.REPLACEMENT=\"LRU\" -Pcache_tb.TRACE_FILE=\"hello.mem\" cache.v cache_tb.v set.v encoder.v lru_replacement.v fifo_replacement.v
+```
+
+This command line would then produce a simulation which when run would output the miss rate, as specified below, for a 2-way cache of size 8192 blocks using the LRU replacement policy for the addresses in the file named trace.mem that is part of this lab.
 
 Notice that it is the same command as above, with the `-Pcache_tb.Xs` removed. Adding `-Pcach_tb.X=Y` overrides the values in the .v file
 
@@ -177,7 +260,7 @@ The output from the simulator has the following format.
 * Next output is the replacement policy, LRU or FIFO, on it’s own line
 * Finally, the output is the miss rate as a percentage, for example 5.72.
 
-To test your configuration you should use the memory trace file, trace.mem, included in this lab’s zipfile. The output for this file should look like for the above vvp command line:
+The follwwing output shows the cample output of the test bench:
 
 ```sh
 misses:          216179
@@ -190,93 +273,13 @@ Associativity:        8
 Cache Size:        2048
 Replacement:        LRU
 ```
-### Programs for Memory Traces
 
-We are going to use 4 programs for the analysis we are doing in this lab. The first two are simple hello world programs. It is suprising how long the memory traces are for these simple 
-programs.
+## Deliverables
 
-For the C version of the hello world program, use the following code:
+You will turn in a lab report that compares the caching miss rate for two hello world programs, one written in C the other in C++, and then output of running the matrix multiplication programs . Next, your report will identify the best cache configuration for each program based on the miss rate and the cost of the configuration. For the purposes of estimating the cost different configurations, you can assume a linear growth of cost for adding more cache. So as the size of the cache doubles the cost doubles. However, in the case of associativity, you can assume a non-linear growth. Since associativity does synthesize more registers or use more resources of a programmable device, but not at the same rate as adding more memory, assume that double the associativity increases the cost by 10%. For example, 2-way associativity is only 10% more expensive than  
 
-```c
-#include <stdio.h>
-#include <stdlib.h>
+Your answer does not necessarily have to be the configuration with the best performance, but you might want to way the diminishing returns on adding more transistors to get less and less performance benefit. There is no right or wrong answer, but you must choose a configuration and provide and explanation as to why you believe such a configuration is best.
 
-int main(int argc, char *argv[]) {
-    printf("Hello, World!\n");
-    return EXIT_SUCCESS;
-}
-```
-
-For the C++ version of the hello world program, use the following code:
-
-```c++
-#include <iostream>
-#include <cstdlib>
-
-int main(int argc, char *argv[]) {
-    std::cout << "Hello, World!" << std::endl;
-    return EXIT_SUCCESS;
-}
-```
-
-The other two programs that show how important understanding a computer's 
-architecture is, and the compiler is when developing efficient code. For this 
-study, you are to compare and analyze the execution time of the two programs 
-given in this repository in the files [program0.cpp](./program0.cpp) and 
-[program1.cpp](./program1.cpp). You should run a number of experiments varying 
-the input size from 100 to 30,000. 
-
-For this lab, we'll only run these executables with a size of 100. Creating traces for sizes greater than 100 will take too long on the containers used by Codespaces.
-
-### Building the Executables
-
-Before running the experiments, it is necessary that you build the code associated with this lab in [program0.cpp](./program0.cpp) and [program1.cpp](./program1.cpp). These executables are built using CMake. CMake is available on Windows, Mac OS X and Linux, and is the default project file for Visual Studio Code. Therefore, be begin building the executables, open the folder containing these files in Visual Studio Code. Then from the Command Pallete type CMake and then select "CMake: Configure". This step creates the build files for this project. You may be asked to select a kit. This means to select a C++ compiler installed on your system. Once you have configured the CMake project, you can build the executables. These executables will be called matrix-mul-row and matrix-mul-col. 
-
-If you don't have Visual Studio Code and the toolchain for C++, then you can do this project in a Codespace on GitHub, just as you've done in previous labs. As usual, create a repository by copying this template repository to a repository you own. Then go to Code -> Create Code Space. From there, follow the directions above to build the executables.
-
-If for some reason you cannot do the CMake configuration and/or build in Visual Studio Code, then you can execute the following commands to configure and build the executables.
-
-```sh
-mkdir build
-cmake -B ./build . # Configures the build system
-cmake --build build # Build the executables
-```
-
-### Running the Executables
-
-Once the executables are built, they can be run to observe how long matrix multiplications take when accessing the matrix either in row major or column major mode. If successful (it should always be successful), it will print out passed and the number of seconds take to do the matrix multiplication. 
-
-The following is an example of running a single experiment for row major matrix multiplication:
-
-```sh
-./build/matrix-mul-row-major 100 # run matrix multiplication with 100 X 100 matrix
-```
-
-The folling is an example of running a single experiment for column major matrix multiplication:
-
-```sh
-./build/matrix-mul-col-major 100 # run matrix multiplication with 100 X 100 matrix
-
-### Analysis
-
-First, produce the memory traces for each of the executables described above. For example, for the C version of hello world, use the following command:
-
-```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./hello 2> hello.raw.mem
-```
-
-Don't forget to process `hello.raw.mem` using `awk` as described above.
-
-Next, produce the memory traces for each of the programs from the case student. The following command will produce a memory trace for `matrix-mul-col-major` from the case study:
-
-```sh
-valgrind --tool=lackey --trace-mem=yes --basic-counts=no ./matrix-mul-col-major 100 2> matrix-mul-col-major.raw.mem
-```
-
-Finally, run experiments, with all the configurations above, for each of the filtered memory trace files. You should also do some other analysis to choose your best configuration for each
-executable. Your report will specify and describe why you chose each configuration. 
-
-You don't need to any wave forms for this lab.
 
 ### Producing the Data Graphs
 

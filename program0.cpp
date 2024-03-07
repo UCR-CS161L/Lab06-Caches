@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   const size_t size = std::stoi(argv[1]);
 
   // y = Ax
-  uint64_t *A = new uint64_t[size * size]; //(long long *)malloc(sizeof(long long) * size * size);
+  uint64_t *A = new uint64_t[size * size];
   uint64_t *x = new uint64_t[size];
   uint64_t *y = new uint64_t[size * size];
   size_t i, j;
@@ -42,9 +42,9 @@ int main(int argc, char **argv) {
 
   std::chrono::duration<double> diff = end - begin;
   std::cout << "passed(" << std::setw(10) << diff.count() << " s)" << std::endl;
-  delete[] A;
-  delete[] x;
-  delete[] y;
+  delete [] A;
+  delete [] x;
+  delete [] y;
 
   return EXIT_SUCCESS;
 }
