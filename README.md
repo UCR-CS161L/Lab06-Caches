@@ -334,7 +334,7 @@ Your job for this lab is to do similar analysis for each program over varying co
 ### Producing the Data Graphs
 
 You should provide at least one graph of the data from all the configurations tested for one of the executables described above. You can provide charts for more than one executable, but you 
-must do at least one. You only need to produce this graph for one replacement policy. This graph can be produced in any software you are familiar with, for example Excel or a Jupyter notebook. This graph should have separate lines for each associativity tested. The X-axis should be the size of the cache, and the Y-axis should be the miss rate.
+must do at least one. You only need to produce this graph for one replacement policy. This graph can be produced in any software you are familiar with, for example Excel or a Jupyter notebook. This graph should have separate lines for each of the associativity sizes, 1, 2, 4, and 8. The X-axis should be the size of the cache, and the Y-axis should be the miss rate.
 
 ### The Lab Report
 
