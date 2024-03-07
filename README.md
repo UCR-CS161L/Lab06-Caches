@@ -233,6 +233,7 @@ module cache_tb #(
     parameter WAY_BITS      = `bits(ASSOCIATIVITY) + 1,
     parameter SET_BITS      = `calc_set_bits(CACHE_SIZE, ASSOCIATIVITY, BLOCK_BITS),
     parameter TAG_BITS      = ADDRESS_BITS - BLOCK_BITS - SET_BITS
+    parameter TRACE_FILE    = "./trace.mem"
 );
 ```
 If you do make the changes in `cache_tb.v` rather than change the parameters on the command line, then you should use the following command:
@@ -263,6 +264,7 @@ The output from the simulator has the following format.
 The follwwing output shows the cample output of the test bench:
 
 ```sh
+Performance data for hello_cpp.LI.mem
 misses:          216179
 total accesses:  849921
 Miss rate:        25.44
@@ -276,10 +278,58 @@ Replacement:        LRU
 
 ## Deliverables
 
-You will turn in a lab report that compares the caching miss rate for two hello world programs, one written in C the other in C++, and then output of running the matrix multiplication programs . Next, your report will identify the best cache configuration for each program based on the miss rate and the cost of the configuration. For the purposes of estimating the cost different configurations, you can assume a linear growth of cost for adding more cache. So as the size of the cache doubles the cost doubles. However, in the case of associativity, you can assume a non-linear growth. Since associativity does synthesize more registers or use more resources of a programmable device, but not at the same rate as adding more memory, assume that double the associativity increases the cost by 10%. For example, 2-way associativity is only 10% more expensive than  
+You will turn in a lab report that compares the caching miss rate for two hello world programs, one written in C the other in C++, and then output of running the matrix multiplication programs . Next, your report will identify the best cache configuration for each program based on the miss rate and the cost of the configuration. For the purposes of estimating the cost different configurations, you can assume a linear growth of cost for adding more cache. So as the size of the cache doubles the cost doubles. However, in the case of associativity, you can assume a non-linear growth. Since associativity does synthesize more registers or use more resources of a programmable device, but not at the same rate as adding more memory, assume that double the associativity increases the cost by 10%. For example, 2-way associativity is only 10% more expensive than than 4-way associativity.
 
-Your answer does not necessarily have to be the configuration with the best performance, but you might want to way the diminishing returns on adding more transistors to get less and less performance benefit. There is no right or wrong answer, but you must choose a configuration and provide and explanation as to why you believe such a configuration is best.
+You will also provide information comparing the various configurations you test and their costs and performance. Based on this information you will provide one configuration that you believe is the best combinaiton of low cost and good performance. 
 
+As an example. You could compare the performance and cost of a full cache (that caches both data and instructions) of one size, say 32K, versus two separate caches, one for data and one for instructions. These two caches do not need to be the same size. For example, you could have a data cache of 16K and an instruction cache of 8K. You would then run the simulation for each of these configurations and not the output. From this you get an understanding of the miss rates for the full cache and the combination of the separate caches. For example if the output for simulating the full cache for one of the memory traces is the following:
+
+```sh
+Performance data for hello_cpp.LI.mem
+misses:           60000
+total accesses: 2750000
+Miss rate:         2.18
+Way bits:             2
+Set bits:            10
+Tag bits:            18
+Associativity:        2
+Cache Size:       32768
+Replacement:        LRU
+```
+
+And the output for the data cache is:
+
+```sh
+Performance data for hello_cpp.L.mem
+misses:           30000
+total accesses:  550000
+Miss rate:         5.45
+Way bits:             2
+Set bits:             9
+Tag bits:            19
+Associativity:        2
+Cache Size:       16384
+Replacement:        LRU
+```
+
+And the output for the instruction cache is:
+
+```sh
+Performance data for hello_cpp.I.mem
+misses:           30000
+total accesses: 2200000
+Miss rate:         1.36
+Way bits:             2
+Set bits:             8
+Tag bits:            20
+Associativity:        2
+Cache Size:        8192
+Replacement:        LRU
+```
+
+To compare the overall performance we need to combine the last two results and compare that result to the results from the first. For the data above, the overall performance of the two caches is (30000 + 30000) / (550000 + 2200000) = 60000 / 2750000 =  2.18. So if this were actual output (it's not) of the simulator, these two configurations have the same performance. However, the separate caches would cost less, becuase it has a total cache size of 24K, whereas the full cache is 32K. So for 25% less cost you get the same performace.
+
+Your job for this lab is to do similar analysis for each program over varying configurations where you change the Cache Size, Associativity and Replacement policy.
 
 ### Producing the Data Graphs
 
@@ -290,7 +340,9 @@ must do at least one. You only need to produce this graph for one replacement po
 
 Finally, create a file called REPORT.md and use GitHub markdown to write your lab report. This lab
 report will contain the information described above. Your charts can just be .png or .jpg files added to the repository. While your grade will be entirely based on this report, don't feel like
-you need to overload the grader with information by writing a lot of text. Instead specify which configurations you chose for each executable and why.  Additionally, describe your observations across the 4 executables and if there is a common theme among the configurations you choose. Be sure to include at least one chart in this lab report.
+you need to overload the grader with information by writing a lot of text. Instead specify which configurations you chose and justify your answer by comparing the performance and cost.  Additionally, describe your observations across the 4 executables and if there is a common theme among the configurations you choose. 
+
+Don't forget to include at least one chart in this lab report.
 
 ## Submission:
 

@@ -106,7 +106,7 @@ initial begin
     
     forever begin   
         if($feof(address_file)) begin
-            $display("End of file");
+            $display("Performance data for %s", TRACE_FILE);
             $display("misses:         %7d", miss_count);
             $display("total accesses: %7d", total_count); 
             $display("Miss rate:      %7.2f", (100.0 * miss_count / total_count));
